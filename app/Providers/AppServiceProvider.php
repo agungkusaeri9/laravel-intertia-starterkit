@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Providers;
+
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
+use App\Repositories\Contracts\RoleRepositoryInterface;
+use App\Repositories\Eloquent\RoleRepository;
+use App\Repositories\Contracts\ActivityLogRepositoryInterface;
+use App\Repositories\Eloquent\ActivityLogRepository;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Eloquent\UserRepository;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password as RulesPassword;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(ActivityLogRepositoryInterface::class, ActivityLogRepository::class);
+        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        Model::shouldBeStrict();
+
+        $this->configureDefaults();
+
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole('super admin') ? true : null;
+        });
+    }
+
+    /**
+     * Configure default behaviors for production-ready applications.
+     */
+    protected function configureDefaults(): void
+    {
+        Date::use(CarbonImmutable::class);
+
+        DB::prohibitDestructiveCommands(
+            app()->isProduction(),
+        );
+
+        RulesPassword::defaults(
+            fn(): ?Password => app()->isProduction()
+                ? Password::min(12)
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()
+                : null,
+        );
+    }
+}
