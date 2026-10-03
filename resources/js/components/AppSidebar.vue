@@ -29,34 +29,34 @@ const mainNavItems = computed<NavItem[]>(() => [
         icon: LayoutGrid,
     },
     {
-        title: 'Master Data',
+        title: 'Data Master',
         href: '#',
         icon: Database,
         items: [
             {
-                title: 'User',
+                title: 'Pengguna',
                 href: '/users',
                 icon: User,
             },
         ],
     },
     {
-        title: 'Role & Permission',
+        title: 'Peran & Hak Akses',
         href: '#',
         icon: ShieldCheck,
         items: [
             {
-                title: 'Roles',
+                title: 'Peran (Roles)',
                 href: '/roles',
             },
             {
-                title: 'Permissions',
+                title: 'Hak Akses (Permissions)',
                 href: '/permissions',
             },
         ],
     },
     {
-        title: 'Activity',
+        title: 'Log Aktivitas',
         href: '/activity',
         icon: History,
     },

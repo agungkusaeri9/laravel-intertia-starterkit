@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserRepository implements UserRepositoryInterface
@@ -21,6 +22,11 @@ class UserRepository implements UserRepositoryInterface
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function getUserOptions(): Collection
+    {
+        return User::select('id', 'name')->orderBy('name')->get();
     }
 
     public function findById(int $id): ?User

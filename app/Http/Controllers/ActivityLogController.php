@@ -2,26 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Http\Requests\ActivityLog\IndexActivityLogRequest;
 use App\Services\ActivityLogService;
-use Illuminate\Http\Request;
+use App\Services\UserService;
 use Inertia\Inertia;
 
 class ActivityLogController extends Controller
 {
     public function __construct(
-        private ActivityLogService $activityLogService
+        private ActivityLogService $activityLogService,
+        private UserService $userService
     ) {}
 
-    public function index(Request $request)
+    public function index(IndexActivityLogRequest $request)
     {
-        $filters = $request->only(['search', 'per_page', 'user_id', 'start_date', 'end_date']);
-        $logs = $this->activityLogService->getLogs($filters, (int) $request->input('per_page', 10));
+        $logs = $this->activityLogService->getLogs($request->filters(), $request->perPage());
 
         return Inertia::render('activity/Index', [
             'logs' => $logs,
-            'filters' => $filters,
-            'users' => User::select('id', 'name')->orderBy('name')->get(),
+            'filters' => $request->filters(),
+            'users' => $this->userService->getUserOptions(),
         ]);
     }
 }

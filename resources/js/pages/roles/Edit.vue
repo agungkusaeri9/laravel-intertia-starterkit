@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ChevronLeft, Shield } from 'lucide-vue-next';
+import { Shield } from 'lucide-vue-next';
+import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { BreadcrumbItem } from '@/types';
 
 interface Permission {
     id: number;
@@ -23,19 +25,16 @@ const props = defineProps<{
     permissions: Permission[];
 }>();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            { title: 'Dashboard', href: '/dashboard' },
-            { title: 'Roles', href: '/roles' },
-            { title: 'Edit', href: '#' },
-        ],
-    },
-});
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Peran & Hak Akses', href: '#' },
+    { title: 'Manajemen Peran', href: '/roles' },
+    { title: `Edit Peran: ${props.role.name}`, href: '#' },
+];
 
 const form = useForm({
     name: props.role.name,
-    permissions: props.role.permissions.map(p => p.name),
+    permissions: props.role.permissions.map((p) => p.name),
 });
 
 const togglePermission = (name: string) => {
@@ -53,33 +52,36 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Edit Role" />
+    <Head :title="`Edit Peran: ${role.name}`" />
 
-    <div class="flex h-full flex-1 flex-col gap-4 p-4">
-        <div class="flex items-center gap-4">
-            <Button variant="outline" size="icon" as-child>
-                <Link href="/roles">
-                    <ChevronLeft class="h-4 w-4" />
-                </Link>
-            </Button>
-            <h1 class="text-xl font-semibold">Edit Role: {{ role.name }}</h1>
+    <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
+        <!-- Breadcrumbs in Content -->
+        <Breadcrumbs :breadcrumbs="breadcrumbs" />
+
+        <div class="space-y-1">
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">
+                Edit Peran: {{ role.name }}
+            </h1>
+            <p class="text-sm text-muted-foreground">
+                Perbarui nama peran dan modifikasi hak akses (permissions) yang diberikan.
+            </p>
         </div>
 
-        <Card class="max-w-4xl">
+        <Card class="w-full">
             <CardHeader>
-                <CardTitle>Role Details</CardTitle>
-                <CardDescription>Update role name and modify assigned permissions.</CardDescription>
+                <CardTitle>Informasi Peran</CardTitle>
+                <CardDescription>Sesuaikan nama peran dan hak akses sistem.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form @submit.prevent="submit" class="grid gap-6">
                     <div class="grid gap-2">
-                        <Label for="name">Role Name</Label>
-                        <Input id="name" v-model="form.name" placeholder="Enter role name" />
+                        <Label for="name">Nama Peran</Label>
+                        <Input id="name" v-model="form.name" placeholder="Masukkan nama peran" />
                         <p v-if="form.errors.name" class="text-xs text-destructive">{{ form.errors.name }}</p>
                     </div>
 
                     <div class="grid gap-4">
-                        <Label>Permissions</Label>
+                        <Label>Hak Akses / Permissions</Label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border rounded-lg p-4 bg-muted/30">
                             <div
                                 v-for="perm in permissions"
@@ -104,11 +106,11 @@ const submit = () => {
 
                     <div class="flex justify-end gap-4">
                         <Button type="button" variant="outline" as-child>
-                            <Link href="/roles">Cancel</Link>
+                            <Link href="/roles">Batal</Link>
                         </Button>
                         <Button type="submit" :disabled="form.processing">
                             <Shield class="mr-2 h-4 w-4" />
-                            {{ form.processing ? 'Updating...' : 'Update Role' }}
+                            {{ form.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
                         </Button>
                     </div>
                 </form>

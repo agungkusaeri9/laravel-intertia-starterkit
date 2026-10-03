@@ -2,15 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Spatie\Permission\Models\Permission;
+use App\Http\Requests\Permission\IndexPermissionRequest;
+use App\Services\PermissionService;
 use Inertia\Inertia;
 
 class PermissionController extends Controller
 {
-    public function index()
+    public function __construct(
+        private PermissionService $permissionService
+    ) {}
+
+    public function index(IndexPermissionRequest $request)
     {
+        $permissions = $this->permissionService->getPermissions(
+            $request->filters(),
+            $request->perPage()
+        );
+
         return Inertia::render('permissions/Index', [
-            'permissions' => Permission::all(),
+            'permissions' => $permissions,
+            'filters' => $request->filters(),
         ]);
     }
 }

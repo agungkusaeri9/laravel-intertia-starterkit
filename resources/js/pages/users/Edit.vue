@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ChevronLeft } from 'lucide-vue-next';
+import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { BreadcrumbItem } from '@/types';
 
 interface Role {
     id: number;
@@ -30,16 +31,12 @@ const props = defineProps<{
     roles: Role[];
 }>();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            { title: 'Dashboard', href: '/dashboard' },
-            { title: 'Master Data', href: '#' },
-            { title: 'User', href: '/users' },
-            { title: 'Edit', href: '#' },
-        ],
-    },
-});
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Data Master', href: '#' },
+    { title: 'Manajemen Pengguna', href: '/users' },
+    { title: `Edit Pengguna: ${props.user.name}`, href: '#' },
+];
 
 const form = useForm({
     name: props.user.name,
@@ -58,40 +55,40 @@ const toggleRole = (name: string, checked: boolean | 'indeterminate') => {
 };
 
 const submit = () => {
-    console.log('Form roles:', form.roles);
     form.patch(`/users/${props.user.id}`);
 };
 </script>
 
 <template>
-    <Head title="Edit User" />
+    <Head :title="`Edit Pengguna: ${user.name}`" />
 
-    <div class="flex h-full flex-1 flex-col gap-4 p-4">
-        <div class="flex items-center gap-4">
-            <Button variant="outline" size="icon" as-child>
-                <Link href="/users">
-                    <ChevronLeft class="h-4 w-4" />
-                </Link>
-            </Button>
-            <h1 class="text-xl font-semibold">Edit User: {{ user.name }}</h1>
+    <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
+        <Breadcrumbs :breadcrumbs="breadcrumbs" />
+
+        <div class="space-y-1">
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">
+                Edit Pengguna: {{ user.name }}
+            </h1>
+            <p class="text-sm text-muted-foreground">
+                Perbarui informasi akun, kata sandi, dan hak akses peran.
+            </p>
         </div>
 
-        <Card class="max-w-2xl">
+        <Card class="w-full">
             <CardHeader>
-                <CardTitle>User Details</CardTitle>
+                <CardTitle>Informasi Pengguna</CardTitle>
                 <CardDescription
-                    >Update the user's information. Leave password blank to keep
-                    current.</CardDescription
+                    >Perbarui informasi akun pengguna. Kosongkan kata sandi jika tidak ingin mengubahnya.</CardDescription
                 >
             </CardHeader>
             <CardContent>
                 <form @submit.prevent="submit" class="grid gap-6">
                     <div class="grid gap-2">
-                        <Label for="name">Full Name</Label>
+                        <Label for="name">Nama Lengkap</Label>
                         <Input
                             id="name"
                             v-model="form.name"
-                            placeholder="Enter full name"
+                            placeholder="Masukkan nama lengkap"
                         />
                         <p
                             v-if="form.errors.name"
@@ -106,7 +103,7 @@ const submit = () => {
                         <Input
                             id="username"
                             v-model="form.username"
-                            placeholder="Enter username"
+                            placeholder="Masukkan username"
                         />
                         <p
                             v-if="form.errors.username"
@@ -117,12 +114,12 @@ const submit = () => {
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="password">Password (Optional)</Label>
+                        <Label for="password">Kata Sandi (Opsional)</Label>
                         <Input
                             id="password"
                             v-model="form.password"
                             type="password"
-                            placeholder="********"
+                            placeholder="Kosongkan jika tidak ingin mengubah kata sandi"
                         />
                         <p
                             v-if="form.errors.password"
@@ -133,7 +130,7 @@ const submit = () => {
                     </div>
 
                     <div class="grid gap-4">
-                        <Label>Roles</Label>
+                        <Label>Hak Akses / Peran (Roles)</Label>
                         <div
                             class="grid grid-cols-2 gap-4 rounded-lg border bg-muted/30 p-4"
                         >
@@ -151,7 +148,7 @@ const submit = () => {
                                 />
                                 <label
                                     :for="`role-${role.id}`"
-                                    class="cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    class="cursor-pointer text-sm leading-none font-medium capitalize peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                 >
                                     {{ role.name }}
                                 </label>
@@ -167,11 +164,11 @@ const submit = () => {
 
                     <div class="flex justify-end gap-4">
                         <Button type="button" variant="outline" as-child>
-                            <Link href="/users">Cancel</Link>
+                            <Link href="/users">Batal</Link>
                         </Button>
                         <Button type="submit" :disabled="form.processing">
                             {{
-                                form.processing ? 'Updating...' : 'Update User'
+                                form.processing ? 'Menyimpan...' : 'Simpan Perubahan'
                             }}
                         </Button>
                     </div>

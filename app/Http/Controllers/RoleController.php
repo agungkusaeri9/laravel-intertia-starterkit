@@ -2,79 +2,98 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Role\IndexRoleRequest;
+use App\Http\Requests\Role\StoreRoleRequest;
+use App\Http\Requests\Role\UpdateRoleRequest;
+use App\Services\PermissionService;
 use App\Services\RoleService;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
     public function __construct(
-        private RoleService $roleService
+        private RoleService $roleService,
+        private PermissionService $permissionService
     ) {}
 
-    public function index()
+    public function index(IndexRoleRequest $request)
     {
+        $roles = $this->roleService->getRoles($request->filters(), $request->perPage());
+
         return Inertia::render('roles/Index', [
-            'roles' => $this->roleService->getAllRoles(),
+            'roles' => $roles,
+            'filters' => $request->filters(),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('roles/Create', [
-            'permissions' => Permission::all(),
+            'permissions' => $this->permissionService->getAllPermissions(),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:roles'],
-            'permissions' => ['array'],
-        ]);
+        $validated = $request->validated();
 
-        $this->roleService->createRole(
-            ['name' => $validated['name']],
-            $validated['permissions'] ?? []
-        );
+        try {
+            $this->roleService->createRole(
+                ['name' => $validated['name']],
+                $validated['permissions'] ?? []
+            );
 
-        return redirect()->route('roles.index')->with('success', 'Role created successfully.');
+            return redirect()->route('roles.index')->with('success', 'Peran baru berhasil ditambahkan.');
+        } catch (\Throwable $e) {
+            Log::error('Gagal menambahkan peran: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->with('error', 'Gagal menambahkan peran: '.$e->getMessage())->withInput();
+        }
     }
 
     public function edit(Role $role)
     {
         return Inertia::render('roles/Edit', [
             'role' => $role->load('permissions'),
-            'permissions' => Permission::all(),
+            'permissions' => $this->permissionService->getAllPermissions(),
         ]);
     }
 
-    public function update(Request $request, Role $role)
+    public function update(UpdateRoleRequest $request, Role $role)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:roles,name,' . $role->id],
-            'permissions' => ['array'],
-        ]);
+        $validated = $request->validated();
 
-        $this->roleService->updateRole(
-            $role,
-            ['name' => $validated['name']],
-            $validated['permissions'] ?? []
-        );
+        try {
+            $this->roleService->updateRole(
+                $role,
+                ['name' => $validated['name']],
+                $validated['permissions'] ?? []
+            );
 
-        return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
+            return redirect()->route('roles.index')->with('success', 'Data peran berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            Log::error('Gagal memperbarui peran: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->with('error', 'Gagal memperbarui peran: '.$e->getMessage())->withInput();
+        }
     }
 
     public function destroy(Role $role)
     {
-        if ($role->name === 'super admin') {
-            return back()->with('error', 'Cannot delete super admin role.');
+        try {
+            if ($role->name === 'super admin') {
+                return back()->with('error', 'Peran super admin tidak dapat dihapus.');
+            }
+
+            $this->roleService->deleteRole($role);
+
+            return redirect()->route('roles.index')->with('success', 'Peran berhasil dihapus.');
+        } catch (\Throwable $e) {
+            Log::error('Gagal menghapus peran: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->with('error', 'Gagal menghapus peran: '.$e->getMessage());
         }
-
-        $this->roleService->deleteRole($role);
-
-        return redirect()->route('roles.index')->with('success', 'Role deleted successfully.');
     }
 }
